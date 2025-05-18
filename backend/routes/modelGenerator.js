@@ -37,7 +37,6 @@ const MODEL_TEMPLATES = {
         dimensions: { height: 2.5, width: 0.5, depth: 0.5 }
     },
 
-    // ✅ Add these
     vase: {
         geometry: 'vase',
         material: 'ceramic',
@@ -74,11 +73,8 @@ class ModelGenerator {
     }
 
     extractPrimaryObject(objects) {
-        // Filter by confidence score
         const validObjects = objects.filter(obj => obj.score > 0.5);
         if (validObjects.length === 0) return null;
-        
-        // Sort by confidence
         return validObjects.sort((a, b) => b.score - a.score)[0];
     }
 
@@ -93,28 +89,23 @@ class ModelGenerator {
     }
 
     customizeModel(primaryObject) {
-        // Clean object name for matching
         const normalizedName = primaryObject.name.toLowerCase();
-        
-        // Try exact match first
         let modelTemplate = this.MODEL_TEMPLATES[normalizedName];
-        
-        // Fallback to partial matches
-        if (!modelTemplate) {
-    if (normalizedName.includes('chair')) {
-        modelTemplate = this.MODEL_TEMPLATES.chair;
-    } else if (normalizedName.includes('table')) {
-        modelTemplate = this.MODEL_TEMPLATES.table;
-    } else if (normalizedName.includes('lamp')) {
-        modelTemplate = this.MODEL_TEMPLATES.lamp;
-    } else if (normalizedName.includes('vase')) {
-        modelTemplate = this.MODEL_TEMPLATES.vase;
-    } else if (normalizedName.includes('cushion')) {
-        modelTemplate = this.MODEL_TEMPLATES.cushion;
-    }
-}
 
-        // Final fallback to cube
+        if (!modelTemplate) {
+            if (normalizedName.includes('chair')) {
+                modelTemplate = this.MODEL_TEMPLATES.chair;
+            } else if (normalizedName.includes('table')) {
+                modelTemplate = this.MODEL_TEMPLATES.table;
+            } else if (normalizedName.includes('lamp')) {
+                modelTemplate = this.MODEL_TEMPLATES.lamp;
+            } else if (normalizedName.includes('vase')) {
+                modelTemplate = this.MODEL_TEMPLATES.vase;
+            } else if (normalizedName.includes('cushion') || normalizedName.includes('pillow')) { // Ensured 'pillow' is included
+                modelTemplate = this.MODEL_TEMPLATES.cushion;
+            }
+        }
+
         const model = modelTemplate ? { ...modelTemplate } : { ...this.MODEL_TEMPLATES.cube };
         model.color = this.generateColor(primaryObject.name);
         return model;
@@ -130,7 +121,7 @@ class ModelGenerator {
             sofa: ['#808000', '#D37095', '#D2B48C'],
             table: ['#B8860B', '#A0522D', '#CD853F']
         };
-        
+
         const colors = colorPalettes[objectType.toLowerCase()] || colorPalettes.vase;
         return colors[Math.floor(Math.random() * colors.length)];
     }

@@ -2,10 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ModelViewer } from './components/ModelViewer';
 import { ImageUploader } from './components/ImageUploader';
 import { LoadingSpinner } from './components/LoadingSpinner';
-import * as THREE from 'three';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
-// Import the image properly for webpack bundling
 import DefaultImage from './3D-model-Creation.png';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 
 const App = () => {
     const [analysis, setAnalysis] = useState(null);
@@ -14,11 +12,8 @@ const App = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const sceneRef = useRef();
-    
-    // Use the imported image directly
     const [imageSrc, setImageSrc] = useState(DefaultImage);
 
-    // Cleanup object URLs when component unmounts or imagePreview changes
     useEffect(() => {
         return () => {
             if (imagePreview && imagePreview.startsWith('blob:')) {
@@ -27,17 +22,15 @@ const App = () => {
         };
     }, [imagePreview]);
 
-    // Update imageSrc when imagePreview changes
     useEffect(() => {
         if (imagePreview) {
             setImageSrc(imagePreview);
         } else {
-            setImageSrc(DefaultImage); // Use the imported image
+            setImageSrc(DefaultImage);
         }
     }, [imagePreview]);
 
     const handleImageUpload = async (file) => {
-        // Clean up previous preview URL
         if (imagePreview && imagePreview.startsWith('blob:')) {
             URL.revokeObjectURL(imagePreview);
         }
@@ -56,13 +49,15 @@ const App = () => {
                 method: 'POST',
                 body: formData,
             });
-            if (!res.ok) throw new Error(res.statusText);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
+            console.log("Frontend received data:", data);
             setAnalysis(data.objects);
             setGeneratedModel(data.modelData);
         } catch (err) {
-            console.error(err);
-            alert('Analysis failed');
+            console.error("Frontend error:", err);
+            alert('Image analysis and model generation failed.');
+            setGeneratedModel(null); // Ensure no model is displayed on failure
         } finally {
             setIsAnalyzing(false);
         }
@@ -105,22 +100,18 @@ const App = () => {
     };
 
     const handleReset = () => {
-        // Clean up preview URL before resetting
         if (imagePreview && imagePreview.startsWith('blob:')) {
             URL.revokeObjectURL(imagePreview);
         }
-        
         setAnalysis(null);
         setGeneratedModel(null);
         setImagePreview(null);
-        setImageSrc(DefaultImage); // Use the imported image
+        setImageSrc(DefaultImage);
     };
 
-    // Handle image load error
     const handleImageError = (e) => {
         console.error('Failed to load image:', e.target.src);
-        // Set a fallback or placeholder image
-        e.target.src = '/api/placeholder/400/300'; // Fallback placeholder
+        e.target.src = '/api/placeholder/400/300';
     };
 
     return (
@@ -137,7 +128,6 @@ const App = () => {
                         />
                     </div>
 
-                    {/* Always show the image preview section */}
                     <div className="bg-white p-6 rounded-lg shadow">
                         <h2 className="mb-4 text-xl font-semibold text-gray-900">
                             {imagePreview ? 'Image Analysis' : 'Default Design Image'}
@@ -150,14 +140,13 @@ const App = () => {
                                     className="w-full max-h-64 object-contain rounded-lg border"
                                     onError={handleImageError}
                                 />
-                                {/* Show loading overlay while analyzing */}
                                 {isAnalyzing && (
                                     <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
                                         <LoadingSpinner message="Analyzing your image..." />
                                     </div>
                                 )}
                             </div>
-                            
+
                             <div className="space-y-4">
                                 {imagePreview && (
                                     <>
