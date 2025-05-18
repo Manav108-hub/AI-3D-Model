@@ -17,25 +17,41 @@ const MODEL_TEMPLATES = {
     sphere: { geometry: 'sphere', material: 'standard', color: '#A52A2A' },
     cylinder: { geometry: 'cylinder', material: 'lambert', color: '#FFFF00' },
     plane: { geometry: 'plane', material: 'basic', color: '#FFFFFF' },
-    chair: { 
-        geometry: 'chair', 
-        material: 'fabric', 
-        color: '#27AE60', 
-        dimensions: { height: 4, width: 2, depth: 2 } 
+
+    chair: {
+        geometry: 'chair',
+        material: 'fabric',
+        color: '#27AE60',
+        dimensions: { height: 4, width: 2, depth: 2 }
     },
-    table: { 
-        geometry: 'table', 
-        material: 'wood', 
-        color: '#A0522D', 
-        dimensions: { height: 3, width: 4, depth: 4 } 
+    table: {
+        geometry: 'table',
+        material: 'wood',
+        color: '#A0522D',
+        dimensions: { height: 3, width: 4, depth: 4 }
     },
-    lamp: { 
-        geometry: 'lamp', 
-        material: 'metal', 
-        color: '#F39C12', 
-        dimensions: { height: 2.5, width: 0.5, depth: 0.5 } 
+    lamp: {
+        geometry: 'lamp',
+        material: 'metal',
+        color: '#F39C12',
+        dimensions: { height: 2.5, width: 0.5, depth: 0.5 }
+    },
+
+    // ✅ Add these
+    vase: {
+        geometry: 'vase',
+        material: 'ceramic',
+        color: '#E67E22',
+        dimensions: { height: 3, radiusTop: 0.6, radiusBottom: 1.0 }
+    },
+    cushion: {
+        geometry: 'cushion',
+        material: 'fabric',
+        color: '#F39C12',
+        dimensions: { width: 2, height: 0.8, depth: 2 }
     }
 };
+
 
 class ModelGenerator {
     constructor() {
@@ -85,15 +101,19 @@ class ModelGenerator {
         
         // Fallback to partial matches
         if (!modelTemplate) {
-            if (normalizedName.includes('chair')) {
-                modelTemplate = this.MODEL_TEMPLATES.chair;
-            } else if (normalizedName.includes('table')) {
-                modelTemplate = this.MODEL_TEMPLATES.table;
-            } else if (normalizedName.includes('lamp')) {
-                modelTemplate = this.MODEL_TEMPLATES.lamp;
-            }
-        }
-        
+    if (normalizedName.includes('chair')) {
+        modelTemplate = this.MODEL_TEMPLATES.chair;
+    } else if (normalizedName.includes('table')) {
+        modelTemplate = this.MODEL_TEMPLATES.table;
+    } else if (normalizedName.includes('lamp')) {
+        modelTemplate = this.MODEL_TEMPLATES.lamp;
+    } else if (normalizedName.includes('vase')) {
+        modelTemplate = this.MODEL_TEMPLATES.vase;
+    } else if (normalizedName.includes('cushion')) {
+        modelTemplate = this.MODEL_TEMPLATES.cushion;
+    }
+}
+
         // Final fallback to cube
         const model = modelTemplate ? { ...modelTemplate } : { ...this.MODEL_TEMPLATES.cube };
         model.color = this.generateColor(primaryObject.name);
