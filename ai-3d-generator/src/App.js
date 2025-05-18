@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ModelViewer } from './components/ModelViewer';
 import { ImageUploader } from './components/ImageUploader';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import * as THREE from 'three';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 
 const App = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -27,12 +29,10 @@ const App = () => {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      setAnalysis(data.objects);  // Changed from data.labels to data.objects
+      setAnalysis(data.objects);
       setGeneratedModel(data.modelData);
     } catch (error) {
       console.error('Error analyzing image:', error);
@@ -45,29 +45,65 @@ const App = () => {
   const handleGenerate3D = async () => {
     if (!analysis) return;
     setIsGenerating(true);
-    
-    // Simulate generation delay
     setTimeout(() => {
       setIsGenerating(false);
-      if (generatedModel) {
-        alert("Model Generated from Image Analysis")
-      }
+      if (generatedModel) alert("Model Generated from Image Analysis");
     }, 1000);
   };
 
   const handleDownload = () => {
     if (!generatedModel) return;
 
-    const element = document.createElement('a');
-    const file = new Blob([JSON.stringify(generatedModel, null, 2)], {
-      type: 'application/json'
+    // 1. Build geometry based on generatedModel.geometry
+    let geometry;
+    switch (generatedModel.geometry) {
+      case 'cube':
+        geometry = new THREE.BoxGeometry(1, 1, 1);
+        break;
+      case 'sphere':
+        geometry = new THREE.SphereGeometry(0.5, 32, 32);
+        break;
+      // add more cases as needed
+      default:
+        geometry = new THREE.BoxGeometry(1, 1, 1);
+    }
+
+    // 2. Build material based on generatedModel.material/color
+    const material = new THREE.MeshStandardMaterial({
+      color: generatedModel.color || '#ffffff',
     });
-    element.href = URL.createObjectURL(file);
-    element.download = `model.json`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    URL.revokeObjectURL(element.href);
+
+    const mesh = new THREE.Mesh(geometry, material);
+    const scene = new THREE.Scene();
+    scene.add(mesh);
+
+    // 3. Export scene as GLB
+    const exporter = new GLTFExporter();
+    exporter.parse(
+      scene,
+      (result) => {
+        let blob, filename;
+
+        if (result instanceof ArrayBuffer) {
+          blob = new Blob([result], { type: 'application/octet-stream' });
+          filename = 'model.glb';
+        } else {
+          const text = JSON.stringify(result, null, 2);
+          blob = new Blob([text], { type: 'application/json' });
+          filename = 'model.gltf';
+        }
+
+        // Trigger download
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      },
+      { binary: true } // set to false for .gltf JSON output
+    );
   };
 
   const handleReset = () => {
@@ -79,35 +115,22 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header and main content unchanged */}
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
-          {/* Upload section */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Upload Design Image
             </h2>
-            <ImageUploader
-              onImageUpload={handleImageUpload}
-              isLoading={isAnalyzing}
-            />
+            <ImageUploader onImageUpload={handleImageUpload} isLoading={isAnalyzing} />
           </div>
 
-          {/* Analysis Results */}
           {imagePreview && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Image Analysis
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <img
-                    src={imagePreview}
-                    alt="Uploaded design"
-                    className="w-full h-64 object-cover rounded-lg border"
-                  />
-                </div>
+                <img src={imagePreview} alt="Uploaded design" className="w-full h-64 object-cover rounded-lg border" />
                 <div className="space-y-4">
                   {isAnalyzing ? (
                     <LoadingSpinner message="Analyzing your image..." />
@@ -136,7 +159,6 @@ const App = () => {
             </div>
           )}
 
-          {/* Model Viewer */}
           {generatedModel && (
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex justify-between items-center mb-4">
@@ -164,23 +186,21 @@ const App = () => {
               ) : (
                 <div className="space-y-4">
                   <ModelViewer modelData={generatedModel} />
-                  {generatedModel && (
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div className="bg-gray-50 p-3 rounded">
-                        <span className="font-medium">Type:</span> {generatedModel.geometry}
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <span className="font-medium">Material:</span> {generatedModel.material}
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <span className="font-medium">Color:</span>
-                        <span
-                          className="inline-block w-4 h-4 rounded ml-2 align-text-bottom"
-                          style={{ backgroundColor: generatedModel.color }}
-                        ></span>
-                      </div>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="bg-gray-50 p-3 rounded">
+                      <span className="font-medium">Type:</span> {generatedModel.geometry}
                     </div>
-                  )}
+                    <div className="bg-gray-50 p-3 rounded">
+                      <span className="font-medium">Material:</span> {generatedModel.material}
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <span className="font-medium">Color:</span>
+                      <span
+                        className="inline-block w-4 h-4 rounded ml-2 align-text-bottom"
+                        style={{ backgroundColor: generatedModel.color }}
+                      ></span>
+                    </div>
+                  </div>
                   <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded">
                     <strong>Controls:</strong> Click and drag to rotate • Scroll to zoom • Right-click and drag to pan
                   </div>
@@ -195,3 +215,4 @@ const App = () => {
 };
 
 export default App;
+  
