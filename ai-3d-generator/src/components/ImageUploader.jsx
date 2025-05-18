@@ -1,6 +1,7 @@
-// src/components/ImageUploader.jsx
 import React, { useState, useRef } from 'react';
 import { CloudArrowUpIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { Image } from '@unpic/react';
+import DefaultImage from "../3D-model-Creation.png";
 
 export const ImageUploader = ({ onImageUpload, isLoading }) => {
   const fileInputRef = useRef(null);
@@ -55,7 +56,8 @@ export const ImageUploader = ({ onImageUpload, isLoading }) => {
           disabled={isLoading}
         />
         <div className="space-y-4">
-          <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+          {/* <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" /> */}
+          <Image src={DefaultImage} width={600} height={400} className='mx-auto h-12 w-12 text-gray-400' />
           <div>
             <p className="text-lg font-medium text-gray-900">
               Drop your design image here
