@@ -45,7 +45,7 @@ const App = () => {
         formData.append('file', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/analyze-image', {
+            const res = await fetch('https://ai-3d-model.onrender.com/api/analyze-image', {
                 method: 'POST',
                 body: formData,
             });

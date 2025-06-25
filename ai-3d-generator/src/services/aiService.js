@@ -2,7 +2,7 @@ import axios from 'axios';
 
 class AIPService {
   constructor() {
-    this.endpoint = 'http://localhost:5000/api/analyze-image'; //  your backend endpoint
+    this.endpoint = 'https://ai-3d-model.onrender.com/api/analyze-image'; //  your backend endpoint
     console.log('🔑 AIP Service endpoint:', this.endpoint);
   }
 
